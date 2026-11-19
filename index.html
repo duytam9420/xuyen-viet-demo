@@ -729,6 +729,36 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,.pick:focus-with
 .pick input{margin:3px 0 0;width:16px;height:16px;accent-color:var(--a)}
 .pick span{font-size:14px;line-height:1.4}
 .pick em{display:block;font-style:normal;font-size:12px;color:var(--muted)}
+li.has-see{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px}
+.see{font:inherit;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:3px;margin-top:3px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--a);cursor:pointer;white-space:nowrap}
+.see:hover,.see[aria-pressed="true"]{background:var(--a);color:var(--panel);border-color:var(--a)}
+.pcard{position:absolute;left:10px;right:10px;bottom:10px;z-index:700;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.22);max-height:calc(100% - 60px);display:flex;flex-direction:column}
+.pphoto{position:relative;background:var(--soft);aspect-ratio:3/2;max-width:100%;flex:none}
+.pphoto img{width:100%;height:100%;object-fit:cover;display:block}
+.pphoto .nav{position:absolute;top:50%;transform:translateY(-50%);font:inherit;font-size:18px;line-height:1;width:32px;height:32px;border-radius:999px;border:0;background:rgba(0,0,0,.5);color:#fff;cursor:pointer}
+.pphoto .prev{left:8px} .pphoto .next{right:8px}
+.pphoto .count{position:absolute;right:8px;bottom:8px;font-size:11px;background:rgba(0,0,0,.55);color:#fff;border-radius:999px;padding:2px 8px}
+.pphoto.noimg{aspect-ratio:auto}
+.pphoto .empty{position:static;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;font-size:13px;color:var(--muted)}
+.pbody{padding:10px 14px 12px;overflow:auto;display:flex;flex-direction:column;gap:4px}
+.pstop{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ptitle{font-family:var(--f-display);font-size:17px;margin:0;line-height:1.25}
+.pnote{margin:0;font-size:13px;color:var(--muted)}
+.pnote .approx{color:var(--warn);font-weight:600}
+.plinks{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.plinks a{font-size:13px;font-weight:600;text-decoration:none;padding:6px 11px;border-radius:999px;border:1px solid var(--line);color:var(--fg)}
+.plinks a.primary{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.pcredit{margin:2px 0 0;font-size:11px;color:var(--muted)}
+.pcredit a{color:inherit}
+.pclose{position:absolute;right:8px;top:8px;z-index:2;font:inherit;font-size:18px;line-height:1;width:30px;height:30px;border-radius:999px;border:0;background:rgba(0,0,0,.55);color:#fff;cursor:pointer}
+@media (max-width:900px){
+  .pcard{position:fixed;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));max-height:78vh;z-index:40}
+  .pphoto{aspect-ratio:16/10}
+  .aside.open{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));width:auto;height:auto;max-height:88vh;display:flex;flex-direction:column;z-index:45;background:var(--panel)}
+  .aside.open #map{position:relative;inset:auto;height:30vh;flex:none}
+  .aside.open .pcard{position:relative;left:auto;right:auto;bottom:auto;flex:0 1 auto;min-height:0;max-height:none;border:0;border-radius:0;box-shadow:none}
+  .aside.open .mapclose{display:none}
+}
 .pick.on{background:var(--as)}
 .send{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
 .send h2{font-family:var(--f-display);font-size:20px;margin:0}
@@ -810,6 +840,17 @@ textarea{min-height:90px;resize:vertical}
     <aside class="aside" id="aside" aria-label="Bản đồ vị trí các điểm">
       <div id="map"></div>
       <div class="mapcap" id="mapcap"></div>
+      <section class="pcard" id="pcard" hidden aria-live="polite">
+        <button class="pclose" id="pclose" aria-label="Đóng thẻ địa điểm">×</button>
+        <div class="pphoto" id="pphoto"></div>
+        <div class="pbody">
+          <div class="pstop" id="pstop"></div>
+          <h3 class="ptitle" id="ptitle"></h3>
+          <p class="pnote" id="pnote"></p>
+          <div class="plinks" id="plinks"></div>
+          <p class="pcredit" id="pcredit"></p>
+        </div>
+      </section>
       <button class="mapclose" id="mapclose" aria-label="Ẩn bản đồ">×</button>
     </aside>
   </div>
@@ -857,230 +898,7 @@ const SEGS = [
  {k:'mt', t:'Miền Tây', d:'Vòng từ TP. Hồ Chí Minh: Mỹ Tho, Cần Thơ, Sóc Trăng, Bạc Liêu, mũi Cà Mau, sang biển Tây Hà Tiên, lên Châu Đốc rồi qua Đồng Tháp về lại TP. Hồ Chí Minh. Khoảng 7–9 ngày.'},
  {k:'ve', t:'Đường biển', d:'Từ TP. Hồ Chí Minh ra Vũng Tàu rồi theo bờ biển miền Trung về Ninh Bình, Hà Nội.'},
 ];
-const STOPS = [
- {id:'dong-hoi-0', k:'hw', name:'Ngủ giữa đường: Đồng Hới hoặc Vinh', prov:'Quảng Trị / Nghệ An', opt:true,
-  d:'Chỉ khi muốn chia 770 km thành hai ngày.',
-  x:[['Biển Nhật Lệ, Bảo Ninh (Đồng Hới)','Đi dạo tối'],['Quảng Bình Quan','Di tích ngay trung tâm Đồng Hới']],
-  m:[['Cháo canh (bánh canh) Quảng Bình',''],['Súp lươn, cháo lươn xứ Nghệ','Nếu ngủ ở Vinh']],
-  q:[['Hải sản ven biển Nhật Lệ','Nhiều quán dọc bờ biển, chọn quán đông khách']],
-  o:[['Khách sạn ven biển Nhật Lệ',''],['Khách sạn trung tâm TP Vinh','']]},
- {id:'da-nang', k:'di', name:'Đà Nẵng', prov:'TP Đà Nẵng',
-  d:'Điểm bắt đầu đường núi. Nên nghỉ 1–2 đêm cho lại sức sau chặng dài.',
-  x:[['Bán đảo Sơn Trà, chùa Linh Ứng','Đường ven núi sát biển'],['Ngũ Hành Sơn',''],['Cầu Rồng','Phun lửa 21h tối thứ Bảy, Chủ nhật'],['Biển Mỹ Khê',''],['Bà Nà Hills, Cầu Vàng','Đi nguyên ngày']],
-  m:[['Mì Quảng',''],['Bánh tráng cuốn thịt heo',''],['Bún chả cá',''],['Hải sản','']],
-  q:[['Mì Quảng Bà Mua','Nhiều cơ sở trong thành phố'],['Bánh tráng cuốn thịt heo Trần','Chuỗi lâu năm'],['Bún chả cá Bà Lữ','Hùng Vương'],['Hải sản Bé Mặn','Võ Nguyên Giáp, ven biển']],
-  o:[['Khách sạn ven biển Mỹ Khê','Dọc Võ Nguyên Giáp, Hoàng Sa'],['InterContinental Sun Peninsula','Nghỉ dưỡng cao cấp trên Sơn Trà']]},
- {id:'a-luoi', k:'di', name:'A Lưới', prov:'TP Huế',
-  d:'Qua đèo Hải Vân, ghé Huế, rồi theo QL49 lên thung lũng A Lưới của người Tà Ôi, Pa Kô.',
-  x:[['Đèo Hải Vân, Hải Vân Quan','Đi đường đèo, không qua hầm'],['Cung QL49 Huế – A Lưới','Đèo xuyên rừng'],['Thác A Nôr',''],['Đồi A Bia (đồi Thịt Băm)','Di tích chiến tranh'],['Làng dệt Zèng A Đớt','Thổ cẩm Tà Ôi']],
-  m:[['Cơm lam, gà nướng',''],['Cá suối nướng',''],['Rượu đoác','Đặc sản người Tà Ôi']],
-  q:[['Quán cơm địa phương ở trung tâm A Lưới','Ít quán, nên hỏi homestay']],
-  o:[['Ngọc Trâm Homestay','Nhiều đánh giá tốt trên Booking'],['PACO HT Homestay','Gần thác A Nôr'],['Nhuanthoa Homestay','Có ban công nhìn núi']]},
- {id:'prao', k:'di', name:'Prao – Đông Giang', prov:'TP Đà Nẵng',
-  d:'Cung đường Hồ Chí Minh A Lưới – Prao gần như không xe, rừng già hai bên. Đất của người Cơ Tu.',
-  x:[['Cung A Lưới – Prao','Đèo dốc, rừng già'],['Làng Bhờ Hôồng','Làng Cơ Tu giữ nhà sàn, nhà Gươl'],['Làng Đhrôồng (Tà Lu)','Dệt thổ cẩm, múa tân tung da dá'],['Rừng pơ mu Tây Giang','Rẽ thêm về phía tây, đi nửa ngày']],
-  m:[['Cơm lam, thịt heo gác bếp',''],['Bánh sừng trâu Cơ Tu',''],['Rượu tà vạt','']],
-  q:[['Ăn cơm tại làng','Đặt qua homestay hoặc tour cộng đồng']],
-  o:[['Nhà sàn cộng đồng làng Bhờ Hôồng','Đặt trước qua tour cộng đồng'],['ACu Homestay','Có tour làng Bhờ Hôồng'],['Nhà nghỉ ở Thạnh Mỹ','Nếu không ở làng']]},
- {id:'kham-duc', k:'di', name:'Thạnh Mỹ – Khâm Đức', prov:'TP Đà Nẵng',
-  d:'Thị trấn nhỏ dưới chân đèo Lò Xo. Chủ yếu nghỉ chân, đổ xăng.',
-  x:[['Sông Vu Gia ở Thạnh Mỹ',''],['Đèo Lò Xo','Đèo dài, nhiều cua nhất đường Hồ Chí Minh'],['Ngã ba Đông Dương, cột mốc Bờ Y','Rẽ thêm ở Ngọc Hồi']],
-  m:[['Cá suối, rau rừng',''],['Heo bản nướng','']],
-  q:[['Nhà hàng Hữu Đạt (Khâm Đức)','Đường Nguyễn Văn Linh']],
-  o:[['Khách sạn, nhà nghỉ trung tâm Khâm Đức','Ít lựa chọn, đặt trước']]},
- {id:'mang-den', k:'di', name:'Măng Đen', prov:'Quảng Ngãi',
-  d:'Cao nguyên thông, hồ và thác, khí hậu mát quanh năm. Nên ở 2 đêm.',
-  x:[['Hồ Đắk Ke',''],['Thác Pa Sỹ',''],['Tượng Đức Mẹ Măng Đen',''],['Thác Lô Ba',''],['Hồ Toong Đam, Toong Zơ Ri','Hồ giữa rừng thông'],['Rừng thông Măng Đen','']],
-  m:[['Gỏi lá',''],['Lẩu gà nấm, cháo nấm',''],['Cá tầm',''],['Heo nướng','']],
-  q:[['Măng Đen Lữ Quán','Lẩu, gỏi măng rừng'],['Nấm Nhà Lành','Cháo nấm, nấm sạch'],['Mountain Lodge Restaurant','Đặc sản Kon Tum, có cà phê']],
-  o:[['Măng Đen Retreat','Nhiều góc chụp ảnh, cho thuê xe'],['HeniSi Homestay','Villa, bungalow, nhà sàn'],['La Maison Homestay','Gần các điểm tham quan'],['Alba-ra Homestay','Gần quảng trường']]},
- {id:'kon-tum', k:'di', name:'Kon Tum', prov:'Quảng Ngãi',
-  d:'Phố nhỏ bên sông Đắk Bla, nhà thờ gỗ hơn trăm năm.',
-  x:[['Nhà thờ gỗ Kon Tum',''],['Cầu treo, nhà rông Kon Klor',''],['Ngục Kon Tum',''],['Chủng viện Thừa Sai','Kiến trúc gỗ Pháp']],
-  m:[['Gỏi lá','Dùng 30–70 loại lá rừng'],['Bún ốc, gỏi tai heo',''],['Cá thính','']],
-  q:[['Gỏi lá Út Cưng','45 Trần Cao Vân'],['Gỏi lá Sức Sống Mới',''],['Quán ốc Bờ Kè','Lâu năm, bún ốc, gỏi tai heo']],
-  o:[['Khách sạn ven sông Đắk Bla','']]},
- {id:'pleiku', k:'di', name:'Pleiku', prov:'Gia Lai',
-  d:'Phố núi đất đỏ. Tháng 11 dã quỳ nở vàng núi lửa Chư Đăng Ya.',
-  x:[['Biển Hồ (hồ T’Nưng)',''],['Đồi chè Biển Hồ, hàng thông',''],['Chùa Minh Thành',''],['Núi lửa Chư Đăng Ya','Đẹp nhất mùa dã quỳ tháng 11'],['Quảng trường Đại Đoàn Kết','']],
-  m:[['Phở khô Gia Lai','Phở hai tô'],['Bò một nắng muối kiến vàng',''],['Cà phê','']],
-  q:[['Phở khô Ngọc Sơn','Lâu đời'],['Phở Hồng','']],
-  o:[['Khách sạn trung tâm Pleiku','']]},
- {id:'bmt', k:'di', name:'Buôn Ma Thuột', prov:'Đắk Lắk',
-  d:'Thủ phủ cà phê. Có thể rẽ Buôn Đôn và hồ Lắk.',
-  x:[['Bảo tàng Thế giới Cà phê',''],['Làng cà phê Trung Nguyên',''],['Buôn Đôn','Cầu treo, nhà sàn, cách TP khoảng 40 km'],['Thác Dray Nur – Dray Sáp',''],['Hồ Lắk, buôn Jun','Đi thuyền độc mộc']],
-  m:[['Bún đỏ',''],['Gà nướng cơm lam',''],['Bún chìa',''],['Cà phê','']],
-  q:[['Bún đỏ Thu','26 Đinh Tiên Hoàng'],['Mì Bà Hường','03 Mạc Thị Bưởi, mì xào giòn']],
-  o:[['Khách sạn trung tâm Buôn Ma Thuột',''],['Nhà sàn ở buôn Jun (hồ Lắk)','Nếu muốn ngủ ở buôn']]},
- {id:'ta-dung', k:'di', name:'Hồ Tà Đùng', prov:'Lâm Đồng',
-  d:'Hàng chục đảo xanh giữa hồ, được ví như vịnh Hạ Long trên núi.',
-  x:[['Ngắm hồ Tà Đùng lúc bình minh',''],['Cây di sản Tà Đùng',''],['Đi thuyền quanh đảo',''],['Thác Liêng Nung (Gia Nghĩa)','Trên đường tới']],
-  m:[['Cá lăng hồ',''],['Gà nướng, cơm lam','']],
-  q:[['Ăn tại homestay','Ít quán, homestay nấu theo yêu cầu']],
-  o:[['Tà Đùng Topview Homestay','Hồ bơi nhìn ra hồ'],['Tà Đùng Ely Homestay','View toàn cảnh, cho cắm trại'],['Homestay A Súy','Có xe đưa đón']]},
- {id:'da-lat', k:'di', name:'Đà Lạt', prov:'Lâm Đồng',
-  d:'Nên ở 2–3 đêm, nghỉ một ngày cho cả đoàn.',
-  x:[['Hồ Xuân Hương, chợ đêm',''],['Đỉnh Langbiang',''],['Đồi chè Cầu Đất',''],['Hồ Tuyền Lâm, Thiền viện Trúc Lâm',''],['Ga Đà Lạt',''],['Dinh Bảo Đại',''],['Thác Datanla','']],
-  m:[['Bánh căn',''],['Bánh mì xíu mại',''],['Lẩu gà lá é',''],['Bánh tráng nướng',''],['Sữa đậu nành nóng','']],
-  q:[['Lẩu gà lá é Tao Ngộ',''],['Bánh mì xíu mại Hoàng Diệu',''],['Bánh căn Nhà Chung',''],['Bánh ướt lòng gà Trang','']],
-  o:[['Dalat Palace Heritage','Khách sạn Pháp cổ'],['Ana Mandara Villas Dalat','Biệt thự Pháp trên đồi'],['Homestay vùng Cầu Đất, Trại Mát','Yên tĩnh, ngoài trung tâm']]},
- {id:'bao-loc', k:'di', name:'Bảo Lộc', prov:'Lâm Đồng',
-  d:'Thủ phủ chè. Dừng nửa ngày trên đường xuống TP. Hồ Chí Minh.',
-  x:[['Đồi chè Tâm Châu',''],['Thác Dambri','Rẽ thêm khoảng 20 km'],['Chùa Linh Quy Pháp Ấn',''],['Hồ Nam Phương','']],
-  m:[['Trà Bảo Lộc',''],['Bánh bèo',''],['Bún bò','']],
-  q:[['Bún bò Nhà Thờ','03 Bế Văn Đàn, chỉ bán sáng'],['Bánh bèo Bố Già','Lâu đời']],
-  o:[['Khách sạn trung tâm Bảo Lộc','Nếu ngủ lại']]},
- {id:'hcm', k:'di', name:'TP. Hồ Chí Minh', prov:'TP Hồ Chí Minh',
-  d:'Nghỉ, bảo dưỡng xe trước chiều về.',
-  x:[['Dinh Độc Lập',''],['Bưu điện Thành phố',''],['Phố đi bộ Nguyễn Huệ',''],['Bảo tàng Chứng tích Chiến tranh',''],['Chợ Bến Thành',''],['Địa đạo Củ Chi','Đi nửa ngày']],
-  m:[['Cơm tấm',''],['Bánh mì',''],['Hủ tiếu',''],['Ốc','']],
-  q:[['Bánh mì Huỳnh Hoa','Lê Thị Riêng'],['Cơm tấm Ba Ghiền','Phú Nhuận'],['Phở Hòa Pasteur',''],['Phố ốc Vĩnh Khánh (Quận 4)','']],
-  o:[['Khách sạn Quận 1','']]},
- {id:'my-tho', k:'mt', name:'Mỹ Tho – Bến Tre', prov:'Đồng Tháp / Vĩnh Long',
-  d:'Cửa ngõ miền Tây, cách TP. Hồ Chí Minh khoảng 70 km. Xứ dừa và cù lao trên sông Tiền.',
-  x:[['Cồn Thới Sơn (cồn Lân)','Đi xuồng ba lá trong rạch dừa nước'],['Chùa Vĩnh Tràng (Mỹ Tho)',''],['Cồn Phụng, xứ dừa Bến Tre',''],['Làng hoa kiểng Chợ Lách','']],
-  m:[['Hủ tiếu Mỹ Tho',''],['Cá tai tượng chiên xù',''],['Kẹo dừa, đuông dừa','']],
-  q:[['Hủ tiếu Mỹ Tho Chín Của','Quán lâu đời ở Mỹ Tho'],['Ăn trưa nhà vườn trên cồn','Đặt qua chủ thuyền']],
-  o:[['Homestay miệt vườn Chợ Lách','Ngủ giữa vườn trái cây'],['Khách sạn trung tâm Mỹ Tho','']]},
- {id:'can-tho', k:'mt', name:'Cần Thơ', prov:'TP Cần Thơ',
-  d:'Thủ phủ miền Tây. Ngủ lại để đi chợ nổi lúc sáng sớm.',
-  x:[['Chợ nổi Cái Răng','Đi lúc 5–6 giờ sáng'],['Bến Ninh Kiều, cầu đi bộ',''],['Nhà cổ Bình Thủy',''],['Vườn trái cây Phong Điền','Mùa trái cây tháng 5–8'],['Thiền viện Trúc Lâm Phương Nam','']],
-  m:[['Lẩu mắm',''],['Bánh xèo miền Tây',''],['Hủ tiếu trên ghe',''],['Bánh cống','']],
-  q:[['Lẩu mắm Dạ Lý',''],['Hủ tiếu bán trên ghe ở chợ nổi','Ăn ngay trên sông']],
-  o:[['Khách sạn ven sông Hậu',''],['Homestay miệt vườn Phong Điền','']]},
- {id:'soc-trang', k:'mt', name:'Sóc Trăng', prov:'TP Cần Thơ',
-  d:'Đất ba dân tộc Kinh, Khmer, Hoa với những ngôi chùa Khmer đẹp nhất miền Tây.',
-  x:[['Chùa Dơi',''],['Chùa Chén Kiểu',''],['Chùa Đất Sét',''],['Chùa Som Rong','Tượng Phật nằm lớn']],
-  m:[['Bún nước lèo',''],['Bánh pía',''],['Bánh cống','']],
-  q:[['Quán bún nước lèo quanh chợ Sóc Trăng','Chọn quán đông khách']],
-  o:[['Khách sạn trung tâm Sóc Trăng','Ít khi cần ngủ lại']]},
- {id:'bac-lieu', k:'mt', name:'Bạc Liêu', prov:'Cà Mau',
-  d:'Đất công tử, cánh đồng điện gió sát biển và cánh đồng muối.',
-  x:[['Nhà Công tử Bạc Liêu',''],['Cánh đồng điện gió','Đẹp lúc hoàng hôn'],['Khu lưu niệm Cao Văn Lầu','Nơi ra đời bài Dạ cổ hoài lang'],['Cánh đồng muối','']],
-  m:[['Bún bò cay',''],['Bánh tằm khoai mì',''],['Ba khía','']],
-  q:[['Quán bún bò cay trong TP Bạc Liêu','']],
-  o:[['Khách sạn Công tử Bạc Liêu','Ở ngay trong nhà Công tử']]},
- {id:'ca-mau', k:'mt', name:'Cà Mau – Đất Mũi', prov:'Cà Mau',
-  d:'Điểm cực Nam của Tổ quốc. Từ TP Cà Mau còn khoảng 110 km đường tới Đất Mũi.',
-  x:[['Mũi Cà Mau, cột mốc tọa độ GPS 0001',''],['Biểu tượng con tàu Đất Mũi',''],['Rừng đước Đất Mũi','Đi xuồng'],['Vườn quốc gia U Minh Hạ','']],
-  m:[['Cua Cà Mau',''],['Ba khía muối',''],['Cá thòi lòi',''],['Ong mật rừng U Minh','']],
-  q:[['Quán hải sản ở Đất Mũi','Ăn cua, tôm tại chỗ']],
-  o:[['Khách sạn TP Cà Mau',''],['Nhà nghỉ ở Đất Mũi','Nếu muốn đón bình minh ở mũi']]},
- {id:'ha-tien', k:'mt', name:'Rạch Giá – Hà Tiên', prov:'An Giang',
-  d:'Biển Tây với núi đá vôi, đầm Đông Hồ. Từ Hà Tiên đi tàu ra Phú Quốc.',
-  x:[['Thạch Động',''],['Mũi Nai',''],['Lăng Mạc Cửu, núi Bình San',''],['Đầm Đông Hồ',''],['Hòn Phụ Tử (Kiên Lương)','']],
-  m:[['Bún kèn',''],['Ghẹ, cua biển',''],['Bánh canh cá lóc','']],
-  q:[['Chợ đêm Hà Tiên','Hải sản, bún kèn']],
-  o:[['Khách sạn ven đầm Đông Hồ','']]},
- {id:'phu-quoc', k:'mt', name:'Phú Quốc', prov:'An Giang', opt:true,
-  d:'Đảo ngọc. Gửi xe ở Hà Tiên hoặc Rạch Giá, đi tàu cao tốc. Cần thêm 2–3 ngày.',
-  x:[['Bãi Sao',''],['Cáp treo Hòn Thơm',''],['Thị trấn Hoàng Hôn (Sunset Town)',''],['Chợ đêm Dinh Cậu',''],['Làng chài Hàm Ninh','']],
-  m:[['Gỏi cá trích',''],['Bún quậy',''],['Ghẹ Hàm Ninh',''],['Nước mắm, tiêu Phú Quốc','']],
-  q:[['Bún quậy Kiến Xây',''],['Nhà hàng Ra Khơi','Hải sản']],
-  o:[['JW Marriott Phú Quốc Emerald Bay',''],['Khu resort Bãi Dài',''],['Homestay Dương Đông','']]},
- {id:'chau-doc', k:'mt', name:'Châu Đốc – Trà Sư', prov:'An Giang',
-  d:'Vùng biên giới sông Hậu. Mùa nước nổi tháng 9–11 là đẹp nhất.',
-  x:[['Miếu Bà Chúa Xứ núi Sam',''],['Rừng tràm Trà Sư','Đi xuồng giữa rừng tràm'],['Núi Cấm',''],['Làng Chăm Đa Phước',''],['Cánh đồng thốt nốt Tri Tôn','']],
-  m:[['Bún cá Châu Đốc',''],['Mắm Châu Đốc, bún mắm',''],['Đường thốt nốt, bánh bò thốt nốt','']],
-  q:[['Quán bún cá quanh chợ Châu Đốc','']],
-  o:[['Victoria Châu Đốc','Ven sông Hậu'],['Khách sạn quanh núi Sam','']]},
- {id:'sa-dec', k:'mt', name:'Sa Đéc – Cao Lãnh', prov:'Đồng Tháp',
-  d:'Làng hoa và Đồng Tháp Mười, trên đường quay về TP. Hồ Chí Minh.',
-  x:[['Làng hoa Sa Đéc','Đẹp nhất trước Tết'],['Nhà cổ Huỳnh Thủy Lê','Nhà người tình của Marguerite Duras'],['Vườn quốc gia Tràm Chim','Mùa sếu tháng 1–4'],['Khu du lịch Gáo Giồng','']],
-  m:[['Hủ tiếu Sa Đéc',''],['Cá lóc nướng trui',''],['Bông điên điển','Mùa nước nổi']],
-  q:[['Quán hủ tiếu Sa Đéc quanh chợ','']],
-  o:[['Khách sạn TP Cao Lãnh','']]},
- {id:'vung-tau', k:'ve', name:'Vũng Tàu – Hồ Tràm', prov:'TP Hồ Chí Minh',
-  d:'Điểm đầu đường biển. Theo đường ven biển Hồ Tràm, Hồ Cốc.',
-  x:[['Tượng Chúa Kitô',''],['Bạch Dinh',''],['Mũi Nghinh Phong',''],['Hải đăng Vũng Tàu',''],['Biển Hồ Tràm, Hồ Cốc','Đường ven biển đẹp']],
-  m:[['Bánh khọt',''],['Lẩu cá đuối',''],['Hải sản','']],
-  q:[['Bánh khọt Gốc Vú Sữa','14 Nguyễn Trường Tộ'],['Nhà hàng Gành Hào','Hải sản ven biển']],
-  o:[['Melia Hồ Tràm','Resort ven biển'],['The Grand Hồ Tràm',''],['Khách sạn Bãi Sau Vũng Tàu','']]},
- {id:'mui-ne', k:'ve', name:'Mũi Né – Phan Thiết', prov:'Lâm Đồng',
-  d:'Đồi cát, làng chài, hải đăng Kê Gà.',
-  x:[['Hải đăng Kê Gà',''],['Đồi cát đỏ, Suối Tiên',''],['Làng chài Mũi Né','Sáng sớm'],['Đồi cát Bàu Trắng','Thuê xe jeep'],['Tháp Pô Sah Inư','']],
-  m:[['Bánh căn',''],['Lẩu thả',''],['Dông nướng',''],['Hải sản','']],
-  q:[['Hải sản Bờ Kè Mũi Né','Đường Nguyễn Đình Chiểu']],
-  o:[['Anantara Mũi Né',''],['Mia Resort Mũi Né',''],['Khách sạn dọc Nguyễn Đình Chiểu','']]},
- {id:'vinh-hy', k:'ve', name:'Phan Rang – Vĩnh Hy', prov:'Khánh Hòa',
-  d:'Vùng khô nắng, đường ven biển Vĩnh Hy – Bình Tiên đẹp nhất chiều về.',
-  x:[['Tháp Po Klong Garai',''],['Làng gốm Bàu Trúc',''],['Vịnh Vĩnh Hy, Hang Rái','Đi sáng sớm hoặc chiều'],['Đồi cát Nam Cương',''],['Vườn nho','']],
-  m:[['Dê nướng, lẩu dê',''],['Bánh căn',''],['Nho, rượu nho','']],
-  q:[['Quán ăn Quý Cang (Yên Ninh)','Hải sản tươi, giá mềm'],['Quán Phố Ốc','Rẻ hơn quán quanh vịnh']],
-  o:[['Homestay Văn Vĩnh Hy','Đánh giá 9,5/10'],['Trúc Nguyên – Vĩnh Hy Homestay','Chủ nhà nhiệt tình'],['Amanoi','Nghỉ dưỡng cao cấp']]},
- {id:'binh-tien', k:'ve', name:'Bình Tiên – Cam Ranh', prov:'Khánh Hòa',
-  d:'Cung đường biển hoang sơ nối Vĩnh Hy với Nha Trang.',
-  x:[['Bãi biển Bình Tiên',''],['Bãi Dài Cam Ranh',''],['Đảo Bình Ba','Đi tàu từ cảng Ba Ngòi']],
-  m:[['Tôm hùm Bình Ba',''],['Ốc','']],
-  q:[['Bè hải sản ở Bình Ba','Hỏi giá trước']],
-  o:[['Homestay trên đảo Bình Ba','Nếu ngủ đảo']]},
- {id:'nha-trang', k:'ve', name:'Nha Trang', prov:'Khánh Hòa',
-  d:'Nên ở 2 đêm, đi tour đảo.',
-  x:[['Tháp Bà Ponagar',''],['Hòn Chồng',''],['Tour đảo vịnh Nha Trang',''],['Tắm bùn I-Resort',''],['Viện Hải dương học',''],['Chùa Long Sơn','']],
-  m:[['Bún chả cá',''],['Nem nướng Ninh Hòa',''],['Bún sứa',''],['Bánh căn','']],
-  q:[['Nem nướng Đặng Văn Quyên',''],['Quán bún sứa quanh chợ Đầm','']],
-  o:[['Six Senses Ninh Vân Bay',''],['Khách sạn đường Trần Phú','View biển']]},
- {id:'phu-yen', k:'ve', name:'Phú Yên: Mũi Điện – Gành Đá Đĩa', prov:'Đắk Lắk',
-  d:'Xứ hoa vàng cỏ xanh. Đón bình minh ở cực Đông.',
-  x:[['Mũi Điện, hải đăng Đại Lãnh','Đón bình minh'],['Bãi Môn',''],['Tháp Nhạn',''],['Gành Đá Đĩa',''],['Đầm Ô Loan',''],['Nhà thờ Mằng Lăng','']],
-  m:[['Mắt cá ngừ đại dương',''],['Bánh canh hẹ',''],['Sò huyết đầm Ô Loan',''],['Bánh hỏi lòng heo','']],
-  q:[['Bánh hỏi lòng heo Hòa Đa','Trên đường đi Gành Đá Đĩa'],['Mr Ốc (Tuy Hòa)',''],['Bánh canh hẹ góc chợ Tuy Hòa','Bán chiều 15–20h']],
-  o:[['Nẫu House (Tuy Hòa)',''],['Những Lời Thư (Tuy Hòa)','Gần biển'],['Homestay làng chài An Hải','Gần Gành Đá Đĩa']]},
- {id:'quy-nhon', k:'ve', name:'Quy Nhơn', prov:'Gia Lai',
-  d:'Biển xanh, eo gió, đảo Kỳ Co. Nên ở 2 đêm.',
-  x:[['Eo Gió',''],['Kỳ Co','Đi cano'],['Ghềnh Ráng, mộ Hàn Mặc Tử',''],['Tháp Đôi',''],['Bảo tàng Quang Trung (Tây Sơn)','Rẽ vào đất liền']],
-  m:[['Bánh xèo tôm nhảy',''],['Bún cá, bún chả cá',''],['Bánh hỏi cháo lòng',''],['Nem chợ Huyện','']],
-  q:[['Bánh xèo Gia Vỹ','Đường Diên Hồng'],['Bún cá Phượng Tèo',''],['Bún cá Ngọc Liên','379 Nguyễn Huệ']],
-  o:[['Anantara Quy Nhơn Villas',''],['Zannier Hotels Bãi San Hô',''],['Khách sạn đường Xuân Diệu','Ven biển']]},
- {id:'ly-son', k:'ve', name:'Sa Huỳnh – Lý Sơn', prov:'Quảng Ngãi',
-  d:'Lý Sơn đi tàu cao tốc từ cảng Sa Kỳ, cần thêm 2 ngày.',
-  x:[['Biển Sa Huỳnh',''],['Khu chứng tích Sơn Mỹ',''],['Lý Sơn: Hang Câu, chùa Hang','Tùy chọn'],['Đỉnh Thới Lới',''],['Đảo Bé','']],
-  m:[['Gỏi tỏi',''],['Cua huỳnh đế',''],['Gỏi rong biển',''],['Cá bống sông Trà','']],
-  q:[['Chợ hải sản đêm Lý Sơn (Phát Hải)','Chọn hải sản, nhờ chế biến']],
-  o:[['Bếp’s House Homestay (Lý Sơn)',''],['Chị Tý Homestay (Lý Sơn)','Chủ nhà nấu ngon'],['Be Ecolodge (Đảo Bé)','']]},
- {id:'hoi-an', k:'ve', name:'Hội An', prov:'TP Đà Nẵng',
-  d:'Nên ở 2 đêm. Đi Mỹ Sơn buổi sáng.',
-  x:[['Phố cổ, Chùa Cầu','Tối thả đèn sông Hoài'],['Thánh địa Mỹ Sơn',''],['Rừng dừa Bảy Mẫu',''],['Làng rau Trà Quế',''],['Biển An Bàng',''],['Cù Lao Chàm','Đi cano nửa ngày']],
-  m:[['Cao lầu',''],['Cơm gà',''],['Bánh mì',''],['Mì Quảng','']],
-  q:[['Bánh mì Phượng','2B Phan Châu Trinh'],['Cơm gà Bà Buội','22 Phan Châu Trinh'],['Cao lầu Thanh','26 Thái Phiên'],['Morning Glory','Món Hội An']],
-  o:[['Four Seasons The Nam Hải',''],['Anantara Hội An',''],['Homestay làng Cẩm Thanh, Trà Quế','Yên tĩnh, đạp xe vào phố']]},
- {id:'hue', k:'ve', name:'Huế', prov:'TP Huế',
-  d:'Nên ở 2 đêm.',
-  x:[['Đại Nội',''],['Chùa Thiên Mụ',''],['Lăng Tự Đức',''],['Lăng Khải Định',''],['Lăng Minh Mạng',''],['Phá Tam Giang','Hoàng hôn']],
-  m:[['Bún bò Huế',''],['Cơm hến',''],['Bánh bèo, nậm, lọc',''],['Bánh khoái',''],['Chè Huế','']],
-  q:[['Bún bò Mụ Rớt','Trần Thúc Nhẫn'],['Bánh khoái Lạc Thiện',''],['Bánh bèo nậm lọc Bà Đỏ',''],['Chè Hẻm','1 Hùng Vương']],
-  o:[['Azerai La Résidence Huế','Ven sông Hương'],['Pilgrimage Village',''],['Nhà vườn Kim Long','Kiểu nhà rường']]},
- {id:'quang-tri', k:'ve', name:'Quảng Trị', prov:'Quảng Trị',
-  d:'Vùng đất lửa: thành cổ, giới tuyến, địa đạo.',
-  x:[['Thành cổ Quảng Trị',''],['Cầu Hiền Lương – sông Bến Hải',''],['Địa đạo Vịnh Mốc',''],['Biển Cửa Tùng',''],['Nghĩa trang Trường Sơn','']],
-  m:[['Cháo bột (bánh canh) Quảng Trị',''],['Bánh tráng cuốn thịt heo',''],['Cháo cá','']],
-  q:[['Bánh tráng cuốn thịt heo kiệt 299 Trần Hưng Đạo','Thị xã Quảng Trị'],['Mỹ Loan – cháo cá','128 Hùng Vương, Đông Hà']],
-  o:[['Khách sạn Đông Hà',''],['Resort ven biển Cửa Tùng','']]},
- {id:'phong-nha', k:'ve', name:'Đồng Hới – Phong Nha', prov:'Quảng Trị',
-  d:'Rẽ lên núi 1–2 ngày để vào động Phong Nha.',
-  x:[['Động Phong Nha','Đi thuyền sông Son'],['Động Thiên Đường',''],['Sông Chày – Hang Tối','Zipline, tắm bùn'],['Suối Nước Moọc',''],['Biển Nhật Lệ, Bảo Ninh (Đồng Hới)',''],['Vũng Chùa – Đảo Yến','Mộ Đại tướng Võ Nguyên Giáp']],
-  m:[['Cháo canh',''],['Bánh bột lọc',''],['Gà đồi, heo rừng Phong Nha','']],
-  q:[['Quán ăn trong làng Phong Nha','Dọc đường chính Sơn Trạch']],
-  o:[['Phong Nha Farmstay','Giữa cánh đồng, từ 2010'],['Chày Lập Farmstay','Trên đồi, có xông lá'],['An An Homestay','Hồ bơi nhìn ra ruộng'],['Phong Nha Friendly Home','Gia đình, gần trung tâm']]},
- {id:'ha-tinh', k:'ve', name:'Hà Tĩnh – Nghệ An', prov:'Hà Tĩnh / Nghệ An',
-  d:'Biển Thiên Cầm, Cửa Lò và quê Bác.',
-  x:[['Biển Thiên Cầm',''],['Ngã ba Đồng Lộc',''],['Khu di tích Kim Liên','Quê Bác'],['Biển Cửa Lò, đảo Lan Châu',''],['Đảo chè Thanh An','Rẽ vào núi']],
-  m:[['Kẹo cu đơ',''],['Súp lươn, cháo lươn',''],['Nhút Thanh Chương',''],['Cháo canh','']],
-  q:[['Quán súp lươn ở TP Vinh','Nhiều quán, chọn quán đông khách']],
-  o:[['Khách sạn ven biển Cửa Lò',''],['Resort Thiên Cầm','']]},
- {id:'thanh-hoa', k:'ve', name:'Thanh Hóa', prov:'Thanh Hóa',
-  d:'Biển Sầm Sơn, Thành nhà Hồ. Có thể rẽ lên Pù Luông.',
-  x:[['Sầm Sơn, hòn Trống Mái',''],['Biển Hải Tiến',''],['Thành nhà Hồ','Di sản thế giới'],['Pù Luông','Rẽ núi 1–2 ngày'],['Suối cá thần Cẩm Lương','']],
-  m:[['Nem chua Thanh Hóa',''],['Chả tôm',''],['Bánh gai Tứ Trụ','']],
-  q:[['Quán chả tôm, nem lụi trong TP Thanh Hóa','']],
-  o:[['Resort ven biển Sầm Sơn',''],['Pù Luông Retreat','Nếu rẽ Pù Luông']]},
- {id:'ninh-binh', k:'ve', name:'Ninh Bình', prov:'Ninh Bình',
-  d:'Chặng cuối, cách Hà Nội 100 km.',
-  x:[['Tràng An','Thuyền 2–3 tiếng'],['Tam Cốc – Bích Động',''],['Hang Múa','Hoàng hôn'],['Chùa Bái Đính',''],['Cố đô Hoa Lư','']],
-  m:[['Dê núi',''],['Cơm cháy',''],['Ốc núi','']],
-  q:[['Quán dê núi quanh Tam Cốc','']],
-  o:[['Emeralda Resort Ninh Bình',''],['Tam Cốc Garden','Nhà vườn giữa núi đá'],['Homestay Tam Cốc','Nhiều lựa chọn']]},
-];
+let STOPS = [];
 const CAT = {x:'Nên đến, cảnh đẹp', m:'Món nên thử', q:'Quán ăn', o:'Chỗ ở'};
 const iid = (s,c,i) => `${s}.${c}${i}`;
 
@@ -1123,7 +941,9 @@ function render(){
         <div class="cols">${Object.entries(CAT).map(([c,label]) => `
           <div class="col"><h3>${label}</h3><ul>${(s[c]||[]).map(([t,sub],i) => {
             const id = iid(s.id,c,i), ck = picked.has(id);
-            return `<li><label class="pick${ck?' on':''}"><input type="checkbox" id="c-${id}" data-id="${id}"${ck?' checked':''}><span>${esc(t)}${sub?`<em>${esc(sub)}</em>`:''}</span></label></li>`;
+            const pl = c === 'x' ? (s.x[i][2] || null) : null;
+            const see = pl && pl.ll ? `<button class="see" id="see-${id}" data-place="${id}" aria-label="Xem ${esc(t)} trên bản đồ"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>${pl.photos && pl.photos.length ? 'Ảnh' : 'Xem'}</button>` : '';
+            return `<li class="${see?'has-see':''}"><label class="pick${ck?' on':''}"><input type="checkbox" id="c-${id}" data-id="${id}"${ck?' checked':''}><span>${esc(t)}${sub?`<em>${esc(sub)}</em>`:''}</span></label>${see}</li>`;
           }).join('')}</ul></div>`).join('')}
         </div>
       </article>`;
@@ -1298,6 +1118,7 @@ function initMap(){
 }
 function paintMap(){
   if (!map) return;
+  if (typeof paintPlaces === 'function') paintPlaces();
   const land = cssv('--land'), vn = cssv('--land-vn'), border = cssv('--border'), panel = cssv('--panel');
   landLayers.forEach(([c,l]) => l.setStyle({color:border, fillColor:c==='VN'?vn:land, fillOpacity:1}));
   segLines.forEach(([k,l]) => l.setStyle({color:segColor(k), opacity: k==='hw' ? .9 : .7}));
@@ -1318,8 +1139,8 @@ function setActive(id){
   const s = STOPS.find(x => x.id === id);
   $('mapcap').textContent = s ? `${STOPS.indexOf(s)+1}. ${s.name}` : '';
   paintMap();
-  if (map && !id) { map.fitBounds([[8.4,103.8],[21.2,109.6]], {padding:[10,10]}); return; }
-  if (map && LL[id]) {
+  if (map && !id && !pinned) { map.fitBounds([[8.4,103.8],[21.2,109.6]], {padding:[10,10]}); return; }
+  if (map && LL[id] && !pinned) {
     map.setView(LL[id], 7, {animate: !matchMedia('(prefers-reduced-motion: reduce)').matches, duration:.5});
   }
 }
@@ -1343,6 +1164,89 @@ function observeStops(){
 }
 $('mapclose').addEventListener('click', () => { const a = $('aside'); a.classList.toggle('mini-off'); $('mapclose').textContent = a.classList.contains('mini-off') ? 'Bản đồ' : '×'; $('mapclose').setAttribute('aria-label', a.classList.contains('mini-off') ? 'Hiện bản đồ' : 'Ẩn bản đồ'); setTimeout(() => map && map.invalidateSize(), 50); });
 
-loadDraft(); render(); initMap(); observeStops();
+
+// ---- ghim riêng cho từng chỗ "nên đến" + thẻ ảnh ----
+let placeLayer = null, placeMk = {}, pinned = null, photoIdx = 0;
+function placeOf(id){ const [sid, rest] = id.split('.'); const s = STOPS.find(x => x.id === sid); if (!s) return null; const i = +rest.slice(1); const it = s.x[i]; return it ? {s, i, t: it[0], note: it[1], p: it[2] || {}} : null; }
+function initPlaces(){
+  if (!map) return;
+  placeLayer = L.layerGroup();
+  STOPS.forEach(s => (s.x || []).forEach((it, i) => {
+    const p = it[2]; if (!p || !p.ll) return;
+    const id = iid(s.id, 'x', i);
+    const m = L.circleMarker(p.ll, {radius:5, weight:2});
+    m.bindTooltip(it[0], {direction:'top', offset:[0,-6]});
+    m.on('click', () => openPlace(id, true));
+    placeMk[id] = m; placeLayer.addLayer(m);
+  }));
+  const toggle = () => { const z = map.getZoom(); if (z >= 8.5) { if (!map.hasLayer(placeLayer)) placeLayer.addTo(map); } else if (map.hasLayer(placeLayer) && !pinned) map.removeLayer(placeLayer); };
+  map.on('zoomend', toggle); toggle(); paintPlaces();
+}
+function paintPlaces(){
+  Object.entries(placeMk).forEach(([id, m]) => {
+    const s = STOPS.find(x => x.id === id.split('.')[0]);
+    const on = id === pinned;
+    m.setStyle({radius: on ? 8 : 5, color: on ? cssv('--fg') : cssv('--panel'), weight: on ? 3 : 2, fillColor: segColor(s.k), fillOpacity: picked.has(id) ? 1 : .75});
+    if (on) m.bringToFront();
+  });
+}
+function gmQuery(o){ return encodeURIComponent(`${o.t.replace(/\s*\(.*?\)/g,'').split(',')[0]}, ${o.s.prov.split('/')[0].trim()}`); }
+function showPhoto(o){
+  const ph = o.p.photos || [], box = $('pphoto');
+  if (!ph.length) {
+    box.classList.add('noimg');
+    box.innerHTML = `<div class="empty">Chưa có ảnh tự do cho chỗ này.<br>Bấm "Ảnh trên Google Maps" để xem ảnh khách chụp.</div>`;
+    $('pcredit').textContent = ''; return;
+  }
+  box.classList.remove('noimg');
+  photoIdx = (photoIdx + ph.length) % ph.length;
+  const x = ph[photoIdx];
+  box.innerHTML = `<img src="${x.src}" alt="${esc(o.t)}" loading="lazy">` +
+    (ph.length > 1 ? `<button class="nav prev" id="pprev" aria-label="Ảnh trước">‹</button><button class="nav next" id="pnext" aria-label="Ảnh sau">›</button><span class="count">${photoIdx+1}/${ph.length}</span>` : '');
+  $('pcredit').innerHTML = `Ảnh: ${esc(x.artist || 'Wikimedia Commons')} · <a href="${x.page}" target="_blank" rel="noopener">${esc(x.lic)}</a> · Wikimedia Commons`;
+  if (ph.length > 1) { $('pprev').onclick = () => { photoIdx--; showPhoto(o); }; $('pnext').onclick = () => { photoIdx++; showPhoto(o); }; }
+}
+function openPlace(id, fromMap){
+  const o = placeOf(id); if (!o) return;
+  pinned = id; photoIdx = 0;
+  document.querySelectorAll('.see[aria-pressed="true"]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  $('see-' + id)?.setAttribute('aria-pressed', 'true');
+  $('pstop').textContent = `${STOPS.indexOf(o.s)+1}. ${o.s.name}`;
+  $('ptitle').textContent = o.t;
+  $('pnote').innerHTML = (o.note ? esc(o.note) : '') + (o.p.approx ? `${o.note ? ' · ' : ''}<span class="approx">Ghim ở vị trí gần đúng</span>` : '');
+  const q = gmQuery(o);
+  $('plinks').innerHTML = `<a class="primary" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Mở Google Maps</a>` +
+    `<a href="https://www.google.com/maps/dir/?api=1&destination=${q}" target="_blank" rel="noopener">Chỉ đường</a>` +
+    (!(o.p.photos||[]).length ? `<a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Ảnh trên Google Maps</a>` : '') +
+    (o.p.wiki ? `<a href="${o.p.wiki}" target="_blank" rel="noopener">Wikipedia</a>` : '');
+  showPhoto(o);
+  $('pcard').hidden = false;
+  const aside = $('aside'); aside.classList.add('open'); aside.classList.remove('mini-off'); if (map) map.invalidateSize();
+  if (map && o.p.ll) {
+    if (placeLayer && !map.hasLayer(placeLayer)) placeLayer.addTo(map);
+    const big = window.innerWidth > 900;
+    map.setView(o.p.ll, big ? 12 : 11, {animate: !matchMedia('(prefers-reduced-motion: reduce)').matches});
+    if (big) setTimeout(() => { const h = $('pcard').offsetHeight; map.panBy([0, Math.round(h/2)], {animate:false}); }, 380);
+  }
+  paintPlaces();
+  if (fromMap) document.querySelector(`[data-s="${o.s.id}"]`)?.scrollIntoView({block:'center', behavior:'smooth'});
+}
+function closePlace(){
+  pinned = null; $('pcard').hidden = true;
+  $('aside').classList.remove('open'); if (map) map.invalidateSize();
+  document.querySelectorAll('.see[aria-pressed="true"]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  paintPlaces();
+  if (map && activeId && LL[activeId]) map.setView(LL[activeId], 7);
+}
+$('pclose').addEventListener('click', closePlace);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && pinned) closePlace(); });
+list.addEventListener('click', e => { const b = e.target.closest('.see'); if (b) { e.preventDefault(); openPlace(b.dataset.place, false); } });
+
+function boot(){
+  fetch('data/stops.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
+    STOPS = d; loadDraft(); render(); initMap(); initPlaces(); observeStops();
+  }).catch(() => { list.innerHTML = '<p class="msg warn">Không tải được danh sách địa điểm. Bạn tải lại trang giúp nhé.</p>'; });
+}
+boot();
 </script>
 </body></html>
